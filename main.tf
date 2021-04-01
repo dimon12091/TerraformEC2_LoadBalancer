@@ -22,6 +22,7 @@ resource "aws_vpc" "main" {
   cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
 
+
   tags = {
     Name = "main-test"
   }
@@ -33,8 +34,6 @@ resource "aws_subnet" "my_subnets" {
   vpc_id            = aws_vpc.main.id
   availability_zone = each.key
   cidr_block        = each.value
-
-  depends_on = [aws_vpc.main]
 }
 
 
@@ -129,9 +128,9 @@ resource "aws_lb" "global_test_lb" {
   internal           = false
   load_balancer_type = "network"
   subnets            = data.aws_subnet_ids.task_subnets.ids
-  # enable_cross_zone_load_balancing = true
+  enable_cross_zone_load_balancing = true
   depends_on = [
-    aws_vpc.main
+    aws_internet_gateway.gw
   ]
 }
 
