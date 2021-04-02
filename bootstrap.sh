@@ -4,7 +4,7 @@ Install-WindowsFeature -name Web-Server -IncludeManagementTools
 New-Item -ItemType Directory -Name 'TestSite' -Path 'C:\'
 New-Item -ItemType File -Name 'index.html' -Path 'C:\TestSite\'
 
-#You can add new IIS with binding_port(you must first stop default, and later create new IIS and add port:'80') or you can change default port site
+#You can add new IIS with binding_port(you must first stop default, and later create new IIS and add (binding, path, hostname, Site name, Application pool) or you can change default port site
 # New-IISSite -Name 'TestSite' -PhysicalPath 'C:\TestSite\' -BindingInformation "*:80:"
 Import-Module ServerManager
 Import-Module WebAdministration
