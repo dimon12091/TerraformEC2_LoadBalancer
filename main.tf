@@ -128,7 +128,7 @@ resource "aws_lb" "global_test_lb" {
   internal           = false
   load_balancer_type = "network"
   subnets            = data.aws_subnet_ids.task_subnets.ids
-  enable_cross_zone_load_balancing = true
+  # enable_cross_zone_load_balancing = true
   depends_on = [
     aws_internet_gateway.gw
   ]

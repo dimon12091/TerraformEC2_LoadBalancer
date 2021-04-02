@@ -1,14 +1,16 @@
 <powershell>
 Enable-NetFirewallRule -All
 Install-WindowsFeature -name Web-Server -IncludeManagementTools
-NInstall-Module -Name 'IISAdministration'
 New-Item -ItemType Directory -Name 'TestSite' -Path 'C:\'
 New-Item -ItemType File -Name 'index.html' -Path 'C:\TestSite\'
-New-IISSite -Name 'TestSite' -PhysicalPath 'C:\TestSite\' -BindingInformation "*:80:"
 
-</powershell>
+#You can add new IIS with binding_port(you must first stop default, and later create new IIS and add port:'80') or you can change default port site
+# New-IISSite -Name 'TestSite' -PhysicalPath 'C:\TestSite\' -BindingInformation "*:80:"
+Import-Module ServerManager
+Import-Module WebAdministration
+Set-ItemProperty 'IIS:\Sites\Default Web Site\' -name PhysicalPath -value 'C:\TestSite\'
 
-<powershell>
+
 #The command below will get the name of the computer
 $ComputerName = "<h1>Computer name: $env:computername</h1>"
 
@@ -26,8 +28,6 @@ $DiscInfo = Get-CimInstance -ClassName Win32_LogicalDisk -Filter "DriveType=3" |
 
 #The command below will get first 10 services information, convert the result to HTML code as table and store it to a variable
 $ServicesInfo = Get-CimInstance -ClassName Win32_Service | Select-Object -First 10  |ConvertTo-Html -Property Name,DisplayName,State -Fragment -PreContent "<h2>Services Information</h2>"
-
-
   
 #The command below will combine all the information gathered into a single HTML report
 $Report = ConvertTo-HTML -Body "$ComputerName $OSinfo $ProcessInfo $BiosInfo $DiscInfo $ServicesInfo" -Title "Computer Information Report" -PostContent "<p>Creation Date: $(Get-Date)<p>"
@@ -35,5 +35,4 @@ $Report = ConvertTo-HTML -Body "$ComputerName $OSinfo $ProcessInfo $BiosInfo $Di
 #The command below will generate the report to an HTML file
 $Report | Out-File 'C:\TestSite\index.html'
 
-Start-IISSite -Name 'TestSite'
 </powershell>
