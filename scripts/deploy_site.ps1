@@ -1,13 +1,10 @@
-<powershell>
-Enable-NetFirewallRule -All
 Install-WindowsFeature -name Web-Server -IncludeManagementTools
 New-Item -ItemType Directory -Name 'TestSite' -Path 'C:\'
 New-Item -ItemType File -Name 'index.html' -Path 'C:\TestSite\'
 
-#You can add new IIS with binding_port(you must first stop default, and later create new IIS and add (binding, path, hostname, Site name, Application pool) or you can change default port site
+#You can add new IIS with binding_port(you must first stop default, and later create new IIS and add (binding, path, hostname, Site name, Application pool) 
 # New-IISSite -Name 'TestSite' -PhysicalPath 'C:\TestSite\' -BindingInformation "*:80:"
-Import-Module ServerManager
-Import-Module WebAdministration
+#I set default web site
 Set-ItemProperty 'IIS:\Sites\Default Web Site\' -name PhysicalPath -value 'C:\TestSite\'
 
 
@@ -34,5 +31,3 @@ $Report = ConvertTo-HTML -Body "$ComputerName $OSinfo $ProcessInfo $BiosInfo $Di
 
 #The command below will generate the report to an HTML file
 $Report | Out-File 'C:\TestSite\index.html'
-
-</powershell>

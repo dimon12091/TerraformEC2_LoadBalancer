@@ -161,15 +161,53 @@ resource "aws_instance" "win" {
   associate_public_ip_address = true
   vpc_security_group_ids=[aws_security_group.allow_rdp_http.id]
   subnet_id = each.value
-  user_data = file("bootstrap.sh")
+  get_password_data = true
+  user_data = file("scripts/firewall.sh")
  
   tags = {
     Name = "Windows_Server"
   }
- 
+
+  # Copies the file as the Administrator user using WinRM
+#   provisioner "file" {
+#     source      = "deploy_site.ps1"
+#     destination = "C:/App/bootstrap.ps1"
+
+#     connection {
+#       type     = "winrm"
+#       user     = "Administrator"
+#       password = self.password_data
+#       host     = self.public_ip
+#     }
+#   }
+#   provisioner "remote-exec"{
+#     connection {
+#     type = "winrm"
+#     user = "Administrator"
+#     password = self.password_data
+#     host = self.public_ip
+#   }
+
+#   inline = [
+#           "C:/App/bootstrap.ps1"
+#      ]
+# }
 }
 
 
+output "instance_info_ips" {
+  value = tomap({
+    for k, win in aws_instance.win : k => win.public_ip
+  })
+
+}
+
+output "instance_info" {
+  value = ({
+    for k, win in aws_instance.win : k => rsadecrypt(win.password_data, file("scripts/key_pair1.pem"))
+  })
+
+}
 
 resource "aws_lb_target_group_attachment" "global_test_attachment" {
   for_each = tomap({
@@ -179,3 +217,5 @@ resource "aws_lb_target_group_attachment" "global_test_attachment" {
   target_id        = each.value
   port             = 80
 }
+
+
