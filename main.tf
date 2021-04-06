@@ -2,12 +2,12 @@ terraform {
   required_version = "> 0.13.0"
 }
 
-
+#(AWS) provider is used to interact with the many resources supported by AWS
 provider "aws" {
   region = "us-east-2"
 }
 
-
+#This is a simple Terraform module for calculating subnet addresses under a particular CIDR prefix.
 module "subnet_addrs" {
   source  = "hashicorp/subnets/cidr"
   version = "1.0.0"
@@ -18,6 +18,7 @@ module "subnet_addrs" {
   ]
 }
 
+#Provides a VPC resource.
 resource "aws_vpc" "main" {
   cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
@@ -28,6 +29,7 @@ resource "aws_vpc" "main" {
   }
 }
 
+#Provides a resource "aws_subnet"
 resource "aws_subnet" "my_subnets" {
   for_each = module.subnet_addrs.network_cidr_blocks
 
@@ -37,7 +39,7 @@ resource "aws_subnet" "my_subnets" {
 }
 
 
-
+#Provides a resource to create a VPC Internet Gateway.
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
 
@@ -47,6 +49,7 @@ resource "aws_internet_gateway" "gw" {
   depends_on = [aws_vpc.main]
 }
 
+#Provides a resource to manage a default route table of a VPC. This resource can manage the default route table of the default or a non-default VPC.
 resource "aws_default_route_table" "r" {
   default_route_table_id = aws_vpc.main.default_route_table_id
 
@@ -57,7 +60,7 @@ resource "aws_default_route_table" "r" {
 
 
 
-
+#Provides a resource to create an association between a route table and a subnet or a route table and an internet gateway or virtual private gateway.
 resource "aws_route_table_association" "associations" {
   for_each = data.aws_subnet_ids.task_subnets.ids
   subnet_id      = each.value
@@ -68,7 +71,7 @@ resource "aws_route_table_association" "associations" {
 }
 
 
-
+#Provides a resource to create a routing table entry (a route) in a VPC routing table.
 resource "aws_route" "public_internet_gateway" {
   route_table_id         = aws_default_route_table.r.id
   destination_cidr_block = "0.0.0.0/0"
@@ -79,7 +82,7 @@ resource "aws_route" "public_internet_gateway" {
  
  
  
- 
+ #Provides a security group resource. I allow all traffic
 resource "aws_security_group" "allow_rdp_http" {
   name        = "allow_all_traffic"
   description = "Allow all traffic"
@@ -114,6 +117,8 @@ resource "aws_security_group" "allow_rdp_http" {
   }
 }
 
+# provides a set of ids for a vpc_id
+#This resource can be useful for getting back a set of subnet ids for a vpc.
 data "aws_subnet_ids" "task_subnets" {
   vpc_id = aws_vpc.main.id
 }
@@ -123,6 +128,7 @@ data "aws_subnet" "task_subnet" {
   id       = each.value
 }
 
+#Provides a Network Load Balancer resource
 resource "aws_lb" "global_test_lb" {
   name               = "network-global-test"
   internal           = false
@@ -135,6 +141,7 @@ resource "aws_lb" "global_test_lb" {
   ]
 }
 
+#Provides a Load Balancer Listener resource. Network Load Balancers must use the TCP protocol.
 resource "aws_lb_listener" "listener" {
   load_balancer_arn = aws_lb.global_test_lb.arn
   port              = "80"
@@ -147,6 +154,7 @@ resource "aws_lb_listener" "listener" {
   }
 }
 
+#Provides a Target Group resource for use with Load Balancer resources.
 resource "aws_lb_target_group" "global_test" {
   name     = "target-group-lb-global"
   port     = 80
@@ -158,7 +166,7 @@ resource "aws_lb_target_group" "global_test" {
   }
 }
 
-
+#Provides an EC2 instance resource for each AZ
 resource "aws_instance" "win" {
   for_each = data.aws_subnet_ids.task_subnets.ids
   ami           = "ami-0db6a09e9ade44bb3"
@@ -216,6 +224,7 @@ output "instance_info" {
 
 }
 
+#Provides the ability to register instances and containers with an Network Load Balancer (NLB) target group
 resource "aws_lb_target_group_attachment" "global_test_attachment" {
   for_each = tomap({
     for k, win in aws_instance.win : k => win.id
