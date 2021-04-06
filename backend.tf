@@ -1,3 +1,5 @@
+#first apply aws_s3_bucket and later terraform init -auto-approve backed s3
+
 # # terraform {
 # #   backend "s3" {
 # #     # Replace this with your bucket name!

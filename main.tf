@@ -81,8 +81,8 @@ resource "aws_route" "public_internet_gateway" {
  
  
 resource "aws_security_group" "allow_rdp_http" {
-  name        = "allow_rdp"
-  description = "Allow RDP traffic"
+  name        = "allow_all_traffic"
+  description = "Allow all traffic"
   vpc_id      = aws_vpc.main.id
 
 
@@ -128,7 +128,8 @@ resource "aws_lb" "global_test_lb" {
   internal           = false
   load_balancer_type = "network"
   subnets            = data.aws_subnet_ids.task_subnets.ids
-  # enable_cross_zone_load_balancing = true
+  enable_cross_zone_load_balancing = true
+
   depends_on = [
     aws_internet_gateway.gw
   ]
@@ -138,10 +139,11 @@ resource "aws_lb_listener" "listener" {
   load_balancer_arn = aws_lb.global_test_lb.arn
   port              = "80"
   protocol          = "TCP"
-
+  
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.global_test.arn
+
   }
 }
 
@@ -150,6 +152,10 @@ resource "aws_lb_target_group" "global_test" {
   port     = 80
   protocol = "TCP"
   vpc_id   = aws_vpc.main.id
+  health_check {
+    port     = 80
+    protocol = "TCP"
+  }
 }
 
 
@@ -157,12 +163,13 @@ resource "aws_instance" "win" {
   for_each = data.aws_subnet_ids.task_subnets.ids
   ami           = "ami-0db6a09e9ade44bb3"
   instance_type = "t2.micro"
+  #You must have key_pair in folder
   key_name      = "key_pair1"
   associate_public_ip_address = true
   vpc_security_group_ids=[aws_security_group.allow_rdp_http.id]
   subnet_id = each.value
   get_password_data = true
-  user_data = file("scripts/firewall.sh")
+  user_data = file("scripts/deploy_and_firewall.sh") 
  
   tags = {
     Name = "Windows_Server"
