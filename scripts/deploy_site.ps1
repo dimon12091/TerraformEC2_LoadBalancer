@@ -1,10 +1,4 @@
 <powershell>
-Enable-NetFirewallRule -All
-Import-Module ServerManager
-Import-Module WebAdministration
-Set-NetFirewallRule -Name “WINRM-HTTP-In-TCP-PUBLIC” -RemoteAddress “Any”
-Enable-PSRemoting –force
-#Deploy  Site
 Install-WindowsFeature -name Web-Server -IncludeManagementTools
 Remove-IISSite -Name "Default Web Site" -Confirm:$false
 New-Item -ItemType Directory -Name 'TestSite' -Path 'C:\'
@@ -12,8 +6,6 @@ New-Item -ItemType File -Name 'index.html' -Path 'C:\TestSite\'
 
 #You can add new IIS with binding_port(you must first stop default, and later create new IIS and add (binding, path, hostname, Site name, Application pool) 
 New-IISSite -Name 'TestSite' -PhysicalPath 'C:\TestSite\' -BindingInformation "*:80:"
-
-
 #The command below will get the name of the computer
 $ComputerName = "<h1>Computer name: $env:computername</h1>"
 
@@ -37,7 +29,5 @@ $Report = ConvertTo-HTML -Body "$ComputerName $OSinfo $ProcessInfo $BiosInfo $Di
 
 #The command below will generate the report to an HTML file
 $Report | Out-File 'C:\TestSite\index.html'
-
-
 
 </powershell>
