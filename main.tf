@@ -177,36 +177,25 @@ resource "aws_instance" "win" {
   vpc_security_group_ids=[aws_security_group.allow_rdp_http.id]
   subnet_id = each.value
   get_password_data = true
-  user_data = file("scripts/deploy_and_firewall.sh") 
+  user_data = file("scripts/firewall.ps1") 
  
   tags = {
     Name = "Windows_Server"
   }
 
-  # Copies the file as the Administrator user using WinRM
-#   provisioner "file" {
-#     source      = "deploy_site.ps1"
-#     destination = "C:/App/bootstrap.ps1"
+  provisioner "file" {
+    source      = "scripts/deploy_site.ps1"
+    destination = "C:/"
 
-#     connection {
-#       type     = "winrm"
-#       user     = "Administrator"
-#       password = self.password_data
-#       host     = self.public_ip
-#     }
-#   }
-#   provisioner "remote-exec"{
-#     connection {
-#     type = "winrm"
-#     user = "Administrator"
-#     password = self.password_data
-#     host = self.public_ip
-#   }
-
-#   inline = [
-#           "C:/App/bootstrap.ps1"
-#      ]
-# }
+    connection {
+    type     = "winrm"
+    user     = "Administrator"
+    password = self.get_password_data
+    host     = self.public_ip
+    port     = "5986"
+    insecure = true
+    }   
+  }
 }
 
 
@@ -219,7 +208,7 @@ output "instance_info_ips" {
 
 output "instance_info" {
   value = ({
-    for k, win in aws_instance.win : k => rsadecrypt(win.password_data, file("scripts/key_pair1.pem"))
+    for k, win in aws_instance.win : k => rsadecrypt(win.password_data, file("bootstrap/key_pair1.pem"))
   })
 
 }
