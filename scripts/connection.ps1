@@ -8,4 +8,4 @@ Set-Item WSMan:\localhost\Service\EnableCompatibilityHttpListener $true
 $User = "Administrator"
 $PWord = ConvertTo-SecureString -String "" -AsPlainText -Force
 $creds = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
-Enter-PSSession -ComputerName "18.222.124.17" -Credential $creds
+Enter-PSSession -ComputerName "" -Credential $creds
