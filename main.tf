@@ -177,24 +177,17 @@ resource "aws_instance" "win" {
   vpc_security_group_ids=[aws_security_group.allow_rdp_http.id]
   subnet_id = each.value
   get_password_data = true
-  user_data = file("scripts/firewall.ps1") 
+  user_data = <<-EOF
+              <powershell>
+              Enable-NetFirewallRule -All
+              Import-Module ServerManager
+              Set-NetFirewallRule -Name “WINRM-HTTP-In-TCP-PUBLIC” -RemoteAddress “Any”
+              Enable-PSRemoting –force
+              </powershell>
+              EOF
  
   tags = {
     Name = "Windows_Server"
-  }
-
-  provisioner "file" {
-    source      = "scripts/deploy_site.ps1"
-    destination = "C:/"
-
-    connection {
-    type     = "winrm"
-    user     = "Administrator"
-    password = self.get_password_data
-    host     = self.public_ip
-    port     = "5986"
-    insecure = true
-    }   
   }
 }
 
@@ -222,5 +215,4 @@ resource "aws_lb_target_group_attachment" "global_test_attachment" {
   target_id        = each.value
   port             = 80
 }
-
 

@@ -1,11 +1,27 @@
-<powershell>
-Install-WindowsFeature -name Web-Server -IncludeManagementTools
-Remove-IISSite -Name "Default Web Site" -Confirm:$false
-New-Item -ItemType Directory -Name 'TestSite' -Path 'C:\'
-New-Item -ItemType File -Name 'index.html' -Path 'C:\TestSite\'
+#Create website folder with file
+New-Item -ItemType Directory -Name "GlobalSite" -Path "C:\"
+New-Item -ItemType File -Name "index.html" -Path "C:\GlobalSite\"
 
-#You can add new IIS with binding_port(you must first stop default, and later create new IIS and add (binding, path, hostname, Site name, Application pool) 
-New-IISSite -Name 'TestSite' -PhysicalPath 'C:\TestSite\' -BindingInformation "*:80:"
+#Install IIS Default WebSite and Default IIS Application Pool
+Install-WindowsFeature -name Web-Server -IncludeManagementTools
+Import-Module WebAdministration
+
+Set-WebBinding -Name 'Default Web Site' -BindingInformation "*:80:" -PropertyName Port -Value 8080
+#Remove-IISSite -Name "Default Web Site" -Confirm:$false
+
+#Create new Application Pool
+New-Item -Path IIS:\AppPools\GlobalAppPool
+
+#Add a new website and set application pool of the site default application to a custom name
+Start-IISCommitDelay
+$TestSite = New-IISSite -Name GlobalSite -BindingInformation "*:80:" -PhysicalPath "C:\GlobalSite\" -Passthru
+$TestSite.Applications["/"].ApplicationPoolName = "GlobalAppPool"
+Stop-IISCommitDelay
+
+
+
+
+
 #The command below will get the name of the computer
 $ComputerName = "<h1>Computer name: $env:computername</h1>"
 
@@ -28,6 +44,5 @@ $ServicesInfo = Get-CimInstance -ClassName Win32_Service | Select-Object -First 
 $Report = ConvertTo-HTML -Body "$ComputerName $OSinfo $ProcessInfo $BiosInfo $DiscInfo $ServicesInfo" -Title "Computer Information Report" -PostContent "<p>Creation Date: $(Get-Date)<p>"
 
 #The command below will generate the report to an HTML file
-$Report | Out-File 'C:\TestSite\index.html'
+$Report | Out-File 'C:\GlobalSite\index.html'
 
-</powershell>
